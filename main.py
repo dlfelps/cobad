@@ -15,10 +15,13 @@ class CoBAD:
     Collective Behavior Anomaly Detection for Human Mobility Trajectories
     """
     
-    def __init__(self, spatial_dim=200, temporal_window=48, collective_threshold=5):
+    def __init__(self, spatial_dim=200, temporal_window=48, collective_threshold=5, 
+                 target_anomaly_rate=0.05, threshold_method='percentile'):
         self.spatial_dim = spatial_dim
         self.temporal_window = temporal_window
         self.collective_threshold = collective_threshold
+        self.target_anomaly_rate = target_anomaly_rate  # Target 5% anomaly rate
+        self.threshold_method = threshold_method  # 'percentile', 'isolation_forest', 'mad', 'adaptive'
         self.scaler = StandardScaler()
         
         # Neural network for behavior embedding (8 features from collective stay behavior)
@@ -35,7 +38,55 @@ class CoBAD:
         self.reconstruction_head = None
         self.train_error_mean = None
         self.train_error_std = None
+        self.train_errors = None
         
+    def _compute_threshold(self, errors):
+        """Compute anomaly threshold using different methods"""
+        if self.threshold_method == 'percentile':
+            # Target percentile based on desired anomaly rate
+            percentile = (1 - self.target_anomaly_rate) * 100
+            return np.percentile(errors, percentile)
+            
+        elif self.threshold_method == 'mad':
+            # Median Absolute Deviation (robust to outliers)
+            median = np.median(errors)
+            mad = np.median(np.abs(errors - median))
+            # Using 3.5 MAD as threshold (roughly equivalent to 3 standard deviations)
+            return median + 3.5 * mad
+            
+        elif self.threshold_method == 'isolation_forest':
+            # Use Isolation Forest for threshold determination
+            from sklearn.ensemble import IsolationForest
+            iso_forest = IsolationForest(contamination=self.target_anomaly_rate, random_state=42)
+            errors_reshaped = errors.reshape(-1, 1)
+            predictions = iso_forest.fit_predict(errors_reshaped)
+            # Find threshold that separates normal from anomaly predictions
+            normal_errors = errors[predictions == 1]
+            return np.max(normal_errors) if len(normal_errors) > 0 else np.percentile(errors, 95)
+            
+        elif self.threshold_method == 'adaptive':
+            # Adaptive threshold based on error distribution shape
+            mean_error = np.mean(errors)
+            std_error = np.std(errors)
+            
+            # Check if errors follow normal distribution (using skewness)
+            from scipy import stats
+            skewness = stats.skew(errors)
+            
+            if abs(skewness) < 0.5:  # Roughly normal
+                # Use z-score approach
+                z_score = stats.norm.ppf(1 - self.target_anomaly_rate)
+                return mean_error + z_score * std_error
+            else:
+                # Use robust percentile for skewed distributions
+                percentile = (1 - self.target_anomaly_rate) * 100
+                return np.percentile(errors, percentile)
+                
+        else:
+            # Default to percentile method
+            percentile = (1 - self.target_anomaly_rate) * 100
+            return np.percentile(errors, percentile)
+    
     def preprocess_trajectories(self, raw_data):
         """Convert raw trajectory data with stay point events to spatial-temporal features"""
         print("Preprocessing stay point trajectories...")
@@ -177,15 +228,17 @@ class CoBAD:
         with torch.no_grad():
             self.collective_patterns = self.behavior_encoder(X_tensor).numpy()
         
-        # Set anomaly threshold more conservatively (85th percentile instead of 95th)
+        # Set anomaly threshold using selected method
         with torch.no_grad():
             reconstructed = autoencoder(X_tensor)
-            reconstruction_errors = torch.mean((reconstructed - X_tensor) ** 2, dim=1)
-            self.anomaly_threshold = np.percentile(reconstruction_errors.numpy(), 85)  # More conservative
+            reconstruction_errors = torch.mean((reconstructed - X_tensor) ** 2, dim=1).numpy()
             
-            # Also store statistics for adaptive thresholding
-            self.train_error_mean = np.mean(reconstruction_errors.numpy())
-            self.train_error_std = np.std(reconstruction_errors.numpy())
+            self.anomaly_threshold = self._compute_threshold(reconstruction_errors)
+            
+            # Store statistics for adaptive thresholding
+            self.train_error_mean = np.mean(reconstruction_errors)
+            self.train_error_std = np.std(reconstruction_errors)
+            self.train_errors = reconstruction_errors  # Store for reference
         
         print(f"Model fitted. Anomaly threshold: {self.anomaly_threshold:.4f}")
         
@@ -214,24 +267,49 @@ class CoBAD:
             reconstructed = self.reconstruction_head(embeddings)
             reconstruction_errors = torch.mean((reconstructed - X_tensor) ** 2, dim=1)
             
-            # Adaptive thresholding based on training distribution
-            test_error_mean = torch.mean(reconstruction_errors).item()
-            test_error_std = torch.std(reconstruction_errors).item()
+            # Dynamic threshold adjustment based on test data distribution
+            test_errors = reconstruction_errors.numpy()
+            test_error_mean = np.mean(test_errors)
+            test_error_std = np.std(test_errors)
             
-            # If test errors are much higher than training, adjust threshold
+            # Method 1: Distribution shift detection
             if test_error_mean > self.train_error_mean + 2 * self.train_error_std:
-                adaptive_threshold = self.train_error_mean + 3 * self.train_error_std
+                print(f"Distribution shift detected. Train mean: {self.train_error_mean:.4f}, Test mean: {test_error_mean:.4f}")
+                # Recompute threshold on test data
+                adaptive_threshold = self._compute_threshold(test_errors)
                 print(f"Using adaptive threshold: {adaptive_threshold:.4f} (original: {self.anomaly_threshold:.4f})")
                 threshold = adaptive_threshold
             else:
                 threshold = self.anomaly_threshold
             
-            # Identify anomalies
-            anomalies = reconstruction_errors > threshold
-            anomaly_scores = reconstruction_errors.numpy()
+            # Method 2: Ensure target anomaly rate
+            initial_anomalies = test_errors > threshold
+            actual_anomaly_rate = np.mean(initial_anomalies)
+            
+            if actual_anomaly_rate > self.target_anomaly_rate * 2:  # If more than 2x target rate
+                print(f"Anomaly rate too high: {actual_anomaly_rate:.1%}. Adjusting threshold...")
+                # Use target percentile on test data
+                target_percentile = (1 - self.target_anomaly_rate) * 100
+                threshold = np.percentile(test_errors, target_percentile)
+                print(f"Adjusted threshold: {threshold:.4f}")
+            
+            # Method 3: Gradual threshold increase if still too high
+            final_anomalies = test_errors > threshold
+            final_anomaly_rate = np.mean(final_anomalies)
+            
+            if final_anomaly_rate > self.target_anomaly_rate * 1.5:
+                print(f"Still high anomaly rate: {final_anomaly_rate:.1%}. Using conservative threshold...")
+                # Use even more conservative threshold
+                conservative_percentile = (1 - self.target_anomaly_rate * 0.5) * 100
+                threshold = np.percentile(test_errors, conservative_percentile)
+                print(f"Conservative threshold: {threshold:.4f}")
+            
+            # Final anomaly detection
+            anomalies = test_errors > threshold
+            anomaly_scores = test_errors
         
         return {
-            'anomalies': anomalies.numpy(),
+            'anomalies': anomalies,  # Already numpy array
             'scores': anomaly_scores,
             'features': collective_features,
             'embeddings': embeddings.numpy()
@@ -373,8 +451,9 @@ def main():
     raw_data_sample = raw_data[:sample_size]
     print(f"Using sample of {len(raw_data_sample)} trajectories for demonstration")
     
-    # Initialize CoBAD model with relaxed parameters for demo
-    cobad = CoBAD(spatial_dim=200, temporal_window=48, collective_threshold=3)
+    # Initialize CoBAD model with dynamic threshold adjustment
+    cobad = CoBAD(spatial_dim=200, temporal_window=48, collective_threshold=3, 
+                  target_anomaly_rate=0.05, threshold_method='adaptive')
     
     # Preprocess trajectories
     trajectories = cobad.preprocess_trajectories(raw_data_sample)
@@ -419,8 +498,9 @@ def main():
         print(f"Error: {e}")
         print("Trying with lower collective_threshold...")
         
-        # Try with lower threshold
-        cobad_relaxed = CoBAD(spatial_dim=200, temporal_window=48, collective_threshold=2)
+        # Try with lower threshold and different method
+        cobad_relaxed = CoBAD(spatial_dim=200, temporal_window=48, collective_threshold=2,
+                             target_anomaly_rate=0.03, threshold_method='mad')
         trajectories_relaxed = cobad_relaxed.preprocess_trajectories(raw_data_sample)
         train_relaxed = trajectories_relaxed[:int(0.7 * len(trajectories_relaxed))]
         test_relaxed = trajectories_relaxed[int(0.7 * len(trajectories_relaxed)):]
