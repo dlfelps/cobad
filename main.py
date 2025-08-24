@@ -449,7 +449,7 @@ def main():
     print(f"Loaded {len(raw_data)} user trajectories")
     
     # Sample data for faster processing during development
-    sample_size = len(raw_data)  # Use first 1000 trajectories
+    sample_size = min(1000000,len(raw_data))  # Use first 1000 trajectories
     raw_data_sample = raw_data[:sample_size]
     print(f"Using sample of {len(raw_data_sample)} trajectories for demonstration")
     
