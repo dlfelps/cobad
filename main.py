@@ -1,14 +1,18 @@
+import pickle
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from pathlib import Path
+import matplotlib.pyplot as plt
+from scipy import stats
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
-import matplotlib.pyplot as plt
+from sklearn.ensemble import IsolationForest
 from tqdm import tqdm
-import pickle
-from data_utils import load_data
+
+from data_utils import load_data_lazy
 
 class CoBAD:
     """
@@ -56,7 +60,6 @@ class CoBAD:
             
         elif self.threshold_method == 'isolation_forest':
             # Use Isolation Forest for threshold determination
-            from sklearn.ensemble import IsolationForest
             iso_forest = IsolationForest(contamination=self.target_anomaly_rate, random_state=42)
             errors_reshaped = errors.reshape(-1, 1)
             predictions = iso_forest.fit_predict(errors_reshaped)
@@ -70,7 +73,6 @@ class CoBAD:
             std_error = np.std(errors)
             
             # Check if errors follow normal distribution (using skewness)
-            from scipy import stats
             skewness = stats.skew(errors)
             
             if abs(skewness) < 0.5:  # Roughly normal
@@ -441,13 +443,13 @@ class CoBAD:
 
 def main():
     # Load trajectory data (sample for faster testing)
-    cityD = Path().joinpath("data").joinpath("cityD-dataset.csv")
+    cityD = Path().joinpath("data").joinpath("cityA-dataset.csv")
     print("Loading trajectory data...")
-    raw_data = load_data(cityD)
+    raw_data = load_data_lazy(cityD)
     print(f"Loaded {len(raw_data)} user trajectories")
     
     # Sample data for faster processing during development
-    sample_size = min(1000, len(raw_data))  # Use first 1000 trajectories
+    sample_size = len(raw_data)  # Use first 1000 trajectories
     raw_data_sample = raw_data[:sample_size]
     print(f"Using sample of {len(raw_data_sample)} trajectories for demonstration")
     
