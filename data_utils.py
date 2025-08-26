@@ -31,7 +31,8 @@ def load_data(file_path):
             uid, day, t, x, y = row['uid'], row['d'], row['t'], row['x'], row['y']
             
             # Calculate stay duration
-            if i + 1 < len(g):
+            # if i + 1 < len(g):
+            if False:
                 # Duration until next location (in 30-minute slots)
                 next_t = g.iloc[i + 1]['t'] if i + 1 < len(g.index) else t + 1
                 duration = next_t - t

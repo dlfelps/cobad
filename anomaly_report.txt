@@ -1,0 +1,192 @@
+================================================================================
+COMPREHENSIVE ANOMALY ANALYSIS REPORT
+================================================================================
+
+OVERVIEW:
+Total collective behaviors: 116
+Anomalies detected: 6
+Anomaly rate: 5.17%
+Anomaly threshold: 0.4335
+
+SCORE STATISTICS:
+Normal behavior scores: 0.1384 ± 0.1500
+Anomalous behavior scores: 1.0951 ± 0.1898
+Score range: [0.0041, 1.3001]
+
+SUBSCORE ANALYSIS:
+absence_anomaly     : 0.8462 ± 0.0507
+co_occurrence_anomaly: 0.4444 ± 0.0786
+duration_anomaly    : 2.2232 ± 2.2870
+size_anomaly        : 0.8403 ± 0.0004
+spatial_anomaly     : 0.8752 ± 0.1371
+temporal_anomaly    : 0.9382 ± 0.0105
+
+FEATURE ATTRIBUTION ANALYSIS:
+time_window         : 3.8546
+center_x            : 3.0494
+center_y            : 2.6427
+spread_x            : 2.6274
+spread_y            : 2.9346
+rel_size            : 3.5396
+weekend_ratio       : 3.2030
+avg_stay_duration   : 3.0303
+
+LINK ANALYSIS:
+Connected anomalies: 6
+Anomaly connections: 0
+Anomaly communities: 6
+Largest community size: 1
+
+TOP 6 ANOMALIES DETAILED ANALYSIS:
+
+Rank 1 - Anomaly #105:
+  Score: 1.3001
+  Time: 33.0h
+  Location: (0.570, 0.892)
+  Group size: 0.000
+  Weekend ratio: 0.750
+  Avg duration: 0.021
+  Subscores:
+    absence_anomaly: 0.9054
+    co_occurrence_anomaly: 0.5000
+    duration_anomaly: 0.6700
+    size_anomaly: 0.8407
+    spatial_anomaly: 0.6062
+    temporal_anomaly: 0.9569
+  Top contributing features:
+    weekend_ratio: 5.6544
+    time_window: 4.0769
+    center_y: 4.0039
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that has an unusually strong weekend preference (75% weekend activity). 
+    The group meets at 16:30 with primarily weekend activity (75%+ weekend), creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: weekend recreational activity or hobby group.
+
+Rank 2 - Anomaly #84:
+  Score: 1.2840
+  Time: 1.0h
+  Location: (0.719, 1.000)
+  Group size: 0.000
+  Weekend ratio: 0.250
+  Avg duration: 0.292
+  Subscores:
+    absence_anomaly: 0.8254
+    co_occurrence_anomaly: 0.5000
+    duration_anomaly: 5.5738
+    size_anomaly: 0.8406
+    spatial_anomaly: 0.9249
+    temporal_anomaly: 0.9310
+  Top contributing features:
+    avg_stay_duration: 6.5732
+    spread_y: 4.0434
+    rel_size: 3.2872
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that involves unusually long gatherings (~524 minutes). 
+    The group meets at 00:30 with primarily weekday activity, creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: late-night service, security, or emergency response activity.
+
+Rank 3 - Anomaly #113:
+  Score: 1.1651
+  Time: 0.0h
+  Location: (0.440, 0.865)
+  Group size: 0.000
+  Weekend ratio: 0.750
+  Avg duration: 0.281
+  Subscores:
+    absence_anomaly: 0.8518
+    co_occurrence_anomaly: 0.5000
+    duration_anomaly: 5.3337
+    size_anomaly: 0.8406
+    spatial_anomaly: 0.8184
+    temporal_anomaly: 0.9310
+  Top contributing features:
+    avg_stay_duration: 5.5685
+    time_window: 4.7067
+    spread_y: 4.4731
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that involves unusually long gatherings (~506 minutes). 
+    The group meets at 00:00 with primarily weekend activity (75%+ weekend), creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: late-night service, security, or emergency response activity.
+
+Rank 4 - Anomaly #61:
+  Score: 1.1432
+  Time: 47.0h
+  Location: (0.803, 0.976)
+  Group size: 0.001
+  Weekend ratio: 0.533
+  Avg duration: 0.021
+  Subscores:
+    absence_anomaly: 0.9163
+    co_occurrence_anomaly: 0.3333
+    duration_anomaly: 0.6700
+    size_anomaly: 0.8396
+    spatial_anomaly: 0.9163
+    temporal_anomaly: 0.9310
+  Top contributing features:
+    time_window: 4.5627
+    center_y: 4.3214
+    weekend_ratio: 4.1645
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that occurs during late night/early morning (23:30) when few collective behaviors happen. 
+    The group meets at 23:30 with mixed weekend/weekday activity, creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: late-night service, security, or emergency response activity.
+
+Rank 5 - Anomaly #62:
+  Score: 0.8399
+  Time: 47.0h
+  Location: (0.989, 0.782)
+  Group size: 0.000
+  Weekend ratio: 0.300
+  Avg duration: 0.021
+  Subscores:
+    absence_anomaly: 0.7910
+    co_occurrence_anomaly: 0.5000
+    duration_anomaly: 0.6700
+    size_anomaly: 0.8400
+    spatial_anomaly: 1.0449
+    temporal_anomaly: 0.9310
+  Top contributing features:
+    spread_x: 5.4950
+    rel_size: 5.1132
+    center_x: 4.8372
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that shows multiple unusual patterns that don't match typical collective behaviors. 
+    The group meets at 23:30 with primarily weekday activity, creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: late-night service, security, or emergency response activity.
+
+Rank 6 - Anomaly #79:
+  Score: 0.8381
+  Time: 44.0h
+  Location: (0.805, 0.981)
+  Group size: 0.000
+  Weekend ratio: 0.452
+  Avg duration: 0.032
+  Subscores:
+    absence_anomaly: 0.7871
+    co_occurrence_anomaly: 0.3333
+    duration_anomaly: 0.4221
+    size_anomaly: 0.8399
+    spatial_anomaly: 0.9406
+    temporal_anomaly: 0.9483
+  Top contributing features:
+    time_window: 4.1962
+    center_y: 3.7611
+    center_x: 3.5595
+
+    PLAIN ENGLISH EXPLANATION:
+    This represents a small group that occurs during late night/early morning (22:00) when few collective behaviors happen. 
+    The group meets at 22:00 with mixed weekend/weekday activity, creating a pattern that 
+    significantly differs from normal urban collective behavior patterns.
+    Likely represents: late-night service, security, or emergency response activity.
+
+================================================================================

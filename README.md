@@ -108,6 +108,97 @@ The system generates:
 - **`cobad_results.png`**: Visualization of anomaly detection results
 - Console output with detailed analysis results
 
+## Comprehensive Anomaly Analysis
+
+For detailed anomaly interpretation, run the comprehensive analysis tool:
+
+```bash
+uv run python anomaly_analysis.py
+```
+
+### Analysis Outputs
+
+The `anomaly_analysis.py` script generates comprehensive outputs for in-depth anomaly interpretation:
+
+#### 1. Interactive Visualization
+- **`anomaly_temporal_analysis.html`**: Multi-panel interactive dashboard with:
+  - Temporal distribution of anomalies by hour of day
+  - Spatial scatter plots showing anomaly locations  
+  - Time-series plots of anomaly scores over time
+  - Subscore analysis across different anomaly types
+  - Weekend vs weekday pattern comparisons
+  - Group size correlations with anomaly scores
+
+#### 2. Text Report
+- **`anomaly_report.txt`**: Comprehensive text report containing:
+  - Overview statistics (total behaviors, anomaly count, detection rate)
+  - Score distribution analysis (normal vs anomalous behavior statistics)
+  - Detailed subscore breakdowns for each anomaly type
+  - Feature attribution analysis showing which features contribute most to anomalies
+  - Link analysis results showing relationships between anomalies
+  - Top 10 anomalies with complete breakdowns including subscores and feature contributions
+
+#### 3. Numerical Data Files (in `analysis_results/` directory)
+- **`anomaly_features.npy`**: Raw feature vectors for all collective behaviors
+- **`anomaly_scores.npy`**: Anomaly scores for each behavior
+- **`anomaly_labels.npy`**: Binary labels (1=anomaly, 0=normal)
+- **`feature_attributions.npy`**: Per-feature contribution scores for each anomaly
+- **`link_analysis.pkl`**: Network graph data showing relationships between anomalies
+- **`subscore_*.npy`**: Individual subscore arrays for detailed analysis
+
+### Subscore Interpretations
+
+The analysis computes six different subscore types to provide detailed anomaly explanations:
+
+#### **Spatial Anomaly Score**
+- **What it measures**: Unusual spatial patterns and location spreads
+- **High scores (>1.0)**: Collective behaviors in rare locations, unusual spatial clustering patterns, or extreme spatial spreads
+- **Low scores (<0.5)**: Behaviors occurring in typical, frequently-used locations with normal spatial characteristics
+- **Interpretation**: High spatial anomaly indicates groups gathering in unexpected places or with unusual spatial arrangements
+
+#### **Temporal Anomaly Score**
+- **What it measures**: Rare time-of-day patterns for collective behaviors
+- **High scores (>0.8)**: Activities occurring at unusual hours when few collective behaviors typically happen
+- **Low scores (<0.3)**: Activities during peak hours with high collective activity
+- **Interpretation**: High temporal anomaly suggests groups active during off-peak hours or unusual daily patterns
+
+#### **Size Anomaly Score**
+- **What it measures**: Unusual group sizes relative to typical collective behavior patterns
+- **High scores (>1.5)**: Extremely large or extremely small groups compared to the norm
+- **Low scores (<0.5)**: Group sizes typical for the observed collective behaviors
+- **Interpretation**: High size anomaly indicates unusually large gatherings or suspiciously small groups claiming to be collective
+
+#### **Duration Anomaly Score**
+- **What it measures**: Atypical stay durations for collective behaviors
+- **High scores (>2.0)**: Extremely short or extremely long stay durations compared to normal patterns
+- **Low scores (<1.0)**: Stay durations typical for collective behaviors
+- **Interpretation**: High duration anomaly suggests rushed activities (very short stays) or extended gatherings (very long stays)
+
+#### **Co-occurrence Anomaly Score**
+- **What it measures**: Rare spatial-temporal combinations
+- **High scores (>0.4)**: Unique or very infrequent combinations of location and time
+- **Low scores (<0.2)**: Common location-time patterns that occur frequently
+- **Interpretation**: High co-occurrence anomaly indicates groups meeting in location-time combinations that are historically rare
+
+#### **Absence Anomaly Score**
+- **What it measures**: Reconstruction error indicating how well the behavior fits learned normal patterns
+- **High scores (>1.5)**: Behaviors that the model struggles to reconstruct, indicating they don't match learned normal patterns
+- **Low scores (<0.8)**: Behaviors that the model can easily reconstruct from learned patterns
+- **Interpretation**: High absence anomaly suggests behaviors that fundamentally differ from the model's understanding of normal collective patterns
+
+### Feature Attribution Analysis
+
+For each detected anomaly, the system provides feature-level attribution scores indicating which aspects contributed most to the anomalous classification:
+
+- **`time_window`**: Unusual timing patterns
+- **`center_x`, `center_y`**: Unusual spatial locations
+- **`spread_x`, `spread_y`**: Unusual spatial clustering patterns
+- **`rel_size`**: Unusual group size relative to other behaviors
+- **`weekend_ratio`**: Unusual weekend/weekday activity patterns
+- **`avg_stay_duration`**: Unusual stay duration patterns
+
+Higher attribution scores (>2.0) indicate features that strongly contributed to the anomaly classification.
+
 ## Architecture
 
 ### Data Processing Pipeline
