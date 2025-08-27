@@ -92,68 +92,85 @@ Each collective behavior is characterized by an 8-dimensional feature vector cap
 - **Group dynamics**: Size and composition metrics
 - **Activity patterns**: Duration and weekend/weekday distinctions
 
-#### Stage 4: Deep Learning Anomaly Detection
+#### Stage 4: Paper-Accurate CoBAD Architecture
 ```
-Feature vectors → Autoencoder → Reconstruction errors → Anomaly scores
-Architecture: 8 → 64 → 32 → 16 → 32 → 64 → 8
+Individual trajectories → Cross-time attention → Graph transformer → Anomaly scoring
+Features: [norm_x, norm_y, is_weekend, start_time, duration, placeholder] (6D)
 ```
 
-CoBAD employs a symmetric autoencoder neural network that:
-1. **Learns normal patterns** from training data of collective behaviors
-2. **Compresses behaviors** into 16-dimensional embeddings
-3. **Reconstructs input features** from learned representations
-4. **Quantifies anomalies** via reconstruction error magnitude
+The paper-accurate CoBAD implementation employs a sophisticated neural architecture:
+1. **Cross-time attention**: Captures temporal dependencies within individual trajectory sequences
+2. **Graph transformer**: Models collective behaviors through cross-people attention mechanisms  
+3. **Dual reconstruction**: Reconstructs both event attributes and co-occurrence link patterns
+4. **Masked pretraining**: Uses BERT-style masking for robust pattern learning
+5. **Multi-component scoring**: Combines learned patterns, event reconstruction, and link reconstruction errors
 
 ### What Makes CoBAD Unique
 
 #### 1. **Multi-Resolution Anomaly Analysis**
-Unlike binary classification approaches, CoBAD provides detailed anomaly interpretation through **six subscore types**:
+The paper-accurate CoBAD provides detailed anomaly interpretation through **eight trajectory-level subscore types**:
 
-- **Spatial anomalies**: Unusual location patterns and geographic spreads
-- **Temporal anomalies**: Rare time-of-day collective activities
-- **Size anomalies**: Unusual group sizes (too large or too small)
-- **Duration anomalies**: Atypical stay durations for collective behaviors
-- **Co-occurrence anomalies**: Rare spatial-temporal combination patterns
-- **Absence anomalies**: Behaviors that don't match any learned normal patterns
+- **Spatial dispersion**: Unusual location variance within trajectories
+- **Temporal pattern**: Rare timing patterns (weekend vs weekday, start times)
+- **Duration anomaly**: Atypical stay duration patterns
+- **Mobility anomaly**: Unusual movement patterns and distances
+- **Length anomaly**: Trajectory complexity outliers
+- **Event reconstruction**: Neural network event attribute reconstruction errors
+- **Link reconstruction**: Co-occurrence pattern reconstruction errors
+- **Pattern learned**: Learned anomaly patterns from the neural scorer
 
 *[IMAGE PLACEHOLDER: Subscore radar chart showing breakdown of top anomalies]*
 
 #### 2. **Dynamic Threshold Adaptation**
-CoBAD implements multiple threshold adjustment methods to handle dataset distribution shifts:
+CoBAD implements multiple robust threshold adjustment methods to handle dataset distribution shifts:
 
-- **Percentile-based**: Maintains target anomaly rates across datasets
-- **MAD (Median Absolute Deviation)**: Robust to outliers in score distributions
-- **Isolation Forest**: Machine learning-based threshold determination
-- **Adaptive**: Automatically selects optimal method based on data characteristics
+- **Percentile-based**: Maintains target anomaly rates (default 5%) across datasets
+- **Statistical outlier**: Mean + 2σ approach for statistical anomaly boundaries
+- **IQR-based**: Q3 + 1.5×IQR for robust outlier detection
+- **Adaptive**: Automatically uses median of all three methods and detects distribution shifts
+- **Test-time adaptation**: Recalculates thresholds when significant distribution shifts are detected
 
-#### 3. **Feature-Level Attribution**
-Each detected anomaly includes **feature attribution scores** indicating which aspects contributed most to the anomalous classification:
+#### 3. **Trajectory-Level Pattern Analysis**
+Each detected anomaly includes detailed pattern analysis explaining the anomalous behavior:
 
 ```
-Example anomaly breakdown:
-- avg_stay_duration: 4.53 (primary contributor)
-- weekend_ratio: 3.42 (secondary contributor)  
-- center_y: 3.18 (tertiary contributor)
+Example trajectory anomaly breakdown:
+🚨 RANK 1 - TRAJECTORY #4521:
+📊 Anomaly Score: 42.3847
+📏 Trajectory Length: 18 points
+🗺️  Spatial Range: X[0.234, 0.891], Y[0.123, 0.567]  
+📅 Weekend Activity: 85.2%
+⏱️  Average Duration: 0.82
+
+🔍 Sub-score Breakdown:
+   spatial_dispersion  :  8.2341 (98.2nd percentile)
+   temporal_pattern   :  6.7834 (94.1st percentile)
+   mobility_anomaly    :  5.9123 (91.5th percentile)
+
+🎯 Key anomaly drivers: Extreme spatial dispersion, High temporal pattern
 ```
 
-This explainability enables analysts to understand *why* specific collective behaviors are flagged as anomalous.
+This detailed analysis enables analysts to understand *why* specific trajectories are flagged as anomalous and what makes them unusual.
 
-#### 4. **Network Analysis of Anomaly Relationships**
-CoBAD constructs **anomaly relationship networks** to identify:
-- **Connected anomalies**: Similar anomalous patterns that may be related
-- **Anomaly communities**: Clusters of related anomalous behaviors
-- **Centrality metrics**: Most influential or connected anomalous events
+#### 4. **Embedding Space Analysis and Clustering**
+The paper-accurate CoBAD performs sophisticated embedding space analysis:
+- **Dimensionality reduction**: PCA and t-SNE visualization of trajectory embeddings
+- **Trajectory clustering**: K-means and DBSCAN clustering of learned embeddings
+- **Cluster characterization**: Analysis of anomaly rates and patterns per cluster
+- **Cross-cluster anomaly analysis**: Understanding how different trajectory types produce different anomaly patterns
 
-*[IMAGE PLACEHOLDER: Network visualization of anomaly relationships]*
+*[IMAGE PLACEHOLDER: t-SNE visualization showing trajectory clusters colored by anomaly scores]*
 
 ### Scalability and Performance
 
-CoBAD is designed for large-scale mobility datasets:
+The paper-accurate CoBAD is designed for large-scale trajectory datasets with CPU-friendly optimizations:
 
-- **Memory-efficient processing**: Lazy loading and streaming data processing
-- **Configurable sampling**: Adjustable data samples for different computational budgets
-- **Distributed-ready architecture**: Modular design supporting parallel processing
-- **Incremental learning**: Model updating capabilities for streaming data
+- **Mini-batch processing**: Configurable batch sizes (default 32) for memory-constrained systems
+- **Lazy loading**: Efficient data streaming without loading entire datasets into memory
+- **Batched inference**: Both training and inference use batched processing to prevent memory overflow
+- **Dynamic batching**: Automatic progress reporting and memory cleanup during processing
+- **Checkpointing**: Automatic model saving with best model tracking and early stopping
+- **Validation splitting**: Built-in train/validation splits with adaptive threshold setting
 
 ---
 
@@ -227,33 +244,35 @@ These patterns suggest that anomalous collective behaviors are primarily charact
 CoBAD is implemented in Python using modern machine learning frameworks and is designed for reproducibility and extensibility:
 
 ### Technical Stack
-- **PyTorch**: Deep learning framework for autoencoder implementation
-- **Scikit-learn**: Clustering and preprocessing utilities
-- **NetworkX**: Graph analysis for anomaly relationship networks  
-- **Plotly**: Interactive visualization dashboards
+- **PyTorch**: Deep learning framework for transformer-based architecture
+- **Scikit-learn**: Dimensionality reduction, clustering, and preprocessing utilities
+- **Plotly**: Interactive visualization dashboards with trajectory analysis
 - **NumPy/Pandas**: Efficient data processing and manipulation
+- **tqdm**: Progress tracking for long-running trajectory analysis
 
 ### Key Outputs
 The CoBAD analysis pipeline generates comprehensive outputs for further investigation:
 
 #### 1. Interactive Visualizations
-- **`anomaly_temporal_analysis.html`**: Multi-panel dashboard with temporal patterns, spatial distributions, and subscore analysis
+- **`trajectory_overview_dashboard.html`**: 6-panel comprehensive analysis with score distributions, subscore correlations, temporal patterns, and spatial distributions
+- **`trajectory_embedding_analysis.html`**: t-SNE, PCA, and clustering visualizations of trajectory embeddings
 - Real-time filtering and zooming capabilities
-- Hover tooltips with detailed anomaly information
+- Hover tooltips with detailed trajectory information
 
 #### 2. Detailed Text Reports  
-- **`anomaly_report.txt`**: Complete analysis summary with:
-  - Overview statistics and detection rates
-  - Subscore breakdowns for each anomaly type
-  - Feature attribution analysis
-  - Top anomalies with detailed explanations
+- Console output with comprehensive anomaly reports including:
+  - Top-N trajectory anomalies with detailed breakdowns
+  - Subscore analysis and percentile rankings
+  - Pattern analysis with human-readable explanations
+  - Cluster analysis with anomaly rates per cluster
 
 #### 3. Numerical Data Exports
-- **Feature vectors**: `anomaly_features.npy`
-- **Anomaly scores**: `anomaly_scores.npy` 
-- **Binary classifications**: `anomaly_labels.npy`
-- **Attribution scores**: `feature_attributions.npy`
-- **Network data**: `link_analysis.pkl`
+- **Anomaly scores**: `anomaly_scores.npy`
+- **Binary classifications**: `anomaly_labels.npy`  
+- **Pattern scores**: `pattern_scores.npy`
+- **Reconstruction errors**: `event_recon_errors.npy`, `link_recon_errors.npy`
+- **Embeddings**: `embeddings.npy`
+- **Subscore data**: `subscore_*.npy` files for each subscore type
 
 ### Running CoBAD
 
@@ -261,11 +280,17 @@ The CoBAD analysis pipeline generates comprehensive outputs for further investig
 # Install dependencies
 uv sync
 
-# Run basic anomaly detection
-uv run python main.py
+# Train new paper-accurate CoBAD model
+uv run python cobad_paper_accurate.py
 
-# Run comprehensive analysis with detailed outputs
-uv run python anomaly_analysis.py
+# Run inference with pre-trained model
+uv run python cobad_paper_accurate.py --load-model cobad_paper_accurate.pth --skip-training
+
+# Run comprehensive trajectory analysis dashboard
+uv run python trajectory_analysis_dashboard.py --model cobad_paper_accurate.pth --save-html --save-results
+
+# Adjust batch size for memory-constrained systems
+uv run python cobad_paper_accurate.py --batch-size 8
 ```
 
 ---
